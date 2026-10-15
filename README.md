@@ -26,7 +26,7 @@ pap/
 
 ## Frontend e GitHub Pages
 
-Na raiz, execute `npm install` e `npm run dev`. Para publicar, confirme que `base` em `vite.config.js` corresponde ao nome do repositório (atualmente `/pap/`), configure GitHub Pages para servir a branch `gh-pages` e execute `npm run deploy`. O frontend é estático; segredos e operações de autenticação permanecem na API.
+Na raiz, execute `npm install` e `npm run dev`. Para publicar, em **Settings → Pages → Build and deployment**, selecione **GitHub Actions** como origem. O workflow `.github/workflows/deploy.yml` compila e publica `dist/` automaticamente quando há alterações na branch padrão; `base` em `vite.config.js` deve corresponder ao nome do repositório (atualmente `/pap/`). O frontend é estático; segredos e operações de autenticação permanecem na API.
 
 ## API e PostgreSQL
 
