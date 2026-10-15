@@ -4,12 +4,231 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="theme-color" content="#f5f6f3" />
-		<meta name="description" content="Sistema Integrado de Gestão para Pequenas Empresas" />
+		<meta name="description" content="Painel de gestão simples para acompanhar vendas, clientes e stock." />
 		<title>Forma | Gestão simplificada</title>
+		<style>
+			@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
+
+			:root {
+				font-family: 'DM Sans', sans-serif;
+				color: #252923;
+				background: #f5f6f3;
+				font-synthesis: none;
+				text-rendering: optimizeLegibility;
+				-webkit-font-smoothing: antialiased;
+				--ink: #252923;
+				--muted: #858b82;
+				--line: #e8ebe5;
+				--green: #526f5e;
+				--coral: #cb7057;
+			}
+
+			* { box-sizing: border-box; }
+			html { min-width: 320px; scroll-behavior: smooth; }
+			body { min-width: 320px; min-height: 100vh; margin: 0; }
+			a { color: inherit; }
+			.layout { min-height: 100vh; }
+			.sidebar { position: fixed; inset: 0 auto 0 0; z-index: 2; display: flex; width: 238px; flex-direction: column; padding: 26px 17px 18px; border-right: 1px solid var(--line); background: #fff; }
+			.brand { display: flex; align-items: center; gap: 10px; margin: 0 0 35px 5px; color: #29382f; font: 800 23px Manrope, sans-serif; text-decoration: none; }
+			.brand-mark { display: grid; width: 31px; height: 31px; place-items: center; border-radius: 8px; color: #fff; background: var(--green); font-size: 20px; }
+			.brand-mark span, .brand-period { color: #e8a17f; }
+			.workspace { display: flex; align-items: center; gap: 10px; padding: 11px 9px; margin-bottom: 30px; border: 1px solid var(--line); border-radius: 6px; }
+			.workspace-mark, .avatar { display: grid; flex: 0 0 auto; place-items: center; }
+			.workspace-mark { width: 34px; height: 34px; border-radius: 5px; color: #73563d; background: #f5e9d8; font-weight: 700; }
+			.workspace-name { display: grid; gap: 3px; }
+			.workspace-name strong { font-size: 12px; }
+			.workspace-name span { color: var(--muted); font-size: 10px; }
+			.nav-label { padding: 0 10px 9px; color: #a0a49d; font-size: 9px; font-weight: 700; }
+			.nav-list { display: grid; gap: 4px; }
+			.nav-list a { display: flex; align-items: center; gap: 12px; padding: 10px 11px; border-radius: 5px; color: #727970; font-size: 12px; text-decoration: none; }
+			.nav-list a:hover, .nav-list a[aria-current="page"] { color: #41604e; background: #edf2ec; }
+			.nav-list a[aria-current="page"] { font-weight: 700; }
+			.nav-mark { width: 18px; color: #849086; text-align: center; font-size: 15px; }
+			.sidebar-foot { margin-top: auto; padding: 15px 4px 0; border-top: 1px solid var(--line); }
+			.profile { display: flex; align-items: center; gap: 10px; }
+			.avatar { width: 34px; height: 34px; border-radius: 50%; color: #355a50; background: #dce9e2; font-size: 10px; font-weight: 700; }
+			.profile div:last-child { display: grid; gap: 3px; }
+			.profile strong { font-size: 11px; }
+			.profile span { color: var(--muted); font-size: 10px; }
+			.main { min-height: 100vh; margin-left: 238px; }
+			.topbar { position: sticky; top: 0; z-index: 1; display: flex; min-height: 64px; align-items: center; justify-content: space-between; padding: 0 38px; border-bottom: 1px solid var(--line); background: rgb(255 255 255 / 94%); backdrop-filter: blur(12px); }
+			.crumb { color: #858b82; font-size: 11px; }
+			.crumb strong { color: #40453e; font-weight: 600; }
+			.top-date { padding: 8px 10px; border: 1px solid var(--line); border-radius: 5px; color: #656b63; background: #fff; font-size: 10px; }
+			.content { width: min(100%, 1460px); padding: 35px 38px 24px; margin: 0 auto; }
+			.welcome { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 25px; }
+			.eyebrow { margin: 0 0 7px; color: #92978f; font-size: 9px; font-weight: 700; }
+			h1, h2, p { margin-top: 0; }
+			h1 { margin-bottom: 5px; font: 700 25px Manrope, sans-serif; }
+			h1 span { color: #d89662; }
+			.welcome-copy { margin-bottom: 0; color: var(--muted); font-size: 11px; }
+			.button { display: inline-flex; min-height: 37px; align-items: center; justify-content: center; padding: 9px 13px; border: 0; border-radius: 5px; color: #fff; background: var(--green); font: 600 11px 'DM Sans', sans-serif; text-decoration: none; }
+			.button:hover { background: #3f5f4e; }
+			.metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 15px; }
+			.metric, .panel { min-width: 0; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+			.metric { padding: 15px 16px 13px; }
+			.metric-label { display: flex; align-items: center; justify-content: space-between; gap: 5px; color: #858a82; font-size: 10px; }
+			.metric-mark { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 5px; font-size: 12px; }
+			.coral { color: #b85f49; background: #fbece6; }
+			.blue { color: #587b91; background: #eaf1f5; }
+			.green { color: #56816b; background: #eaf2ec; }
+			.gold { color: #997943; background: #f7f1e4; }
+			.metric-value { overflow: hidden; margin: 12px 0 8px; font: 700 20px Manrope, sans-serif; text-overflow: ellipsis; white-space: nowrap; }
+			.metric-foot { color: #92978f; font-size: 9px; }
+			.up { color: #538166; font-weight: 700; }
+			.down { color: var(--coral); font-weight: 700; }
+			.columns { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(255px, 1fr); gap: 14px; margin-bottom: 14px; }
+			.panel { padding: 18px 19px; }
+			.panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+			h2 { margin-bottom: 5px; color: #343832; font: 700 13px Manrope, sans-serif; }
+			.panel-head p { margin-bottom: 0; color: #999d96; font-size: 10px; }
+			.period { color: #858b82; font-size: 9px; white-space: nowrap; }
+			.chart-total { display: flex; align-items: center; gap: 10px; margin: 17px 0 11px; }
+			.chart-total strong { font: 700 20px Manrope, sans-serif; }
+			.chart { position: relative; display: grid; height: 154px; grid-template-columns: repeat(12, minmax(0, 1fr)); align-items: end; gap: 8px; padding: 7px 0 23px; border-bottom: 1px solid #eff0ed; background: repeating-linear-gradient(to bottom, transparent 0, transparent 36px, #eff0ed 37px, transparent 38px); }
+			.bar-wrap { display: flex; height: 100%; flex-direction: column; justify-content: flex-end; align-items: center; gap: 6px; }
+			.bar { width: min(100%, 22px); min-height: 4px; border-radius: 3px 3px 1px 1px; background: #dce8de; }
+			.bar-wrap:nth-child(10) .bar, .bar-wrap:hover .bar { background: #64836d; }
+			.bar-wrap span { color: #999e96; font-size: 8px; }
+			.stock-list { display: grid; margin: 10px 0 0; }
+			.stock-row { display: flex; align-items: center; gap: 9px; padding: 11px 0; border-bottom: 1px solid #f0f1ee; }
+			.stock-row:last-child { border-bottom: 0; }
+			.swatch { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; border-radius: 5px; font-size: 15px; }
+			.stock-copy { display: grid; min-width: 0; flex: 1; gap: 3px; }
+			.stock-copy strong { overflow: hidden; color: #464b44; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+			.stock-copy span { color: #9ca097; font-size: 9px; }
+			.stock-count { padding: 4px 6px; border-radius: 4px; font-size: 9px; font-weight: 700; white-space: nowrap; }
+			.inventory-link, .section-link { color: #567966; font-size: 10px; text-decoration: none; }
+			.inventory-link { display: block; padding: 8px; border: 1px solid var(--line); border-radius: 4px; text-align: center; }
+			.inventory-link:hover { background: #f7f9f6; }
+			.activity { padding-bottom: 7px; }
+			.activity-head { margin-bottom: 12px; }
+			.table-scroll { overflow-x: auto; }
+			table { width: 100%; border-collapse: collapse; text-align: left; }
+			th { padding: 9px 10px; border-bottom: 1px solid #eff0ed; color: #a0a49d; font-size: 8px; font-weight: 700; white-space: nowrap; }
+			td { padding: 9px 10px; border-bottom: 1px solid #f1f2ef; color: #555b53; font-size: 10px; white-space: nowrap; }
+			tbody tr:last-child td { border-bottom: 0; }
+			.client { display: flex; align-items: center; gap: 8px; }
+			.client .avatar { width: 27px; height: 27px; font-size: 8px; }
+			.avatar-coral { color: #a75d4a; background: #f8e9e3; }
+			.avatar-blue { color: #58758a; background: #e7eff3; }
+			.avatar-green { color: #50735d; background: #e5eee7; }
+			.muted { color: #8d928a; }
+			.amount { text-align: right; font-weight: 600; }
+			.footer { display: flex; justify-content: space-between; gap: 12px; padding: 16px 2px 0; color: #989d95; font-size: 9px; }
+			.status { color: #56816b; }
+
+			@media (max-width: 1050px) {
+				.sidebar { width: 205px; }
+				.main { margin-left: 205px; }
+				.topbar { padding-inline: 24px; }
+				.content { padding-inline: 24px; }
+				.metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+				.columns { grid-template-columns: minmax(0, 1.3fr) minmax(230px, 1fr); }
+			}
+			@media (max-width: 760px) {
+				.sidebar { position: static; width: auto; flex-direction: row; align-items: center; gap: 18px; padding: 12px 16px; border-right: 0; border-bottom: 1px solid var(--line); }
+				.brand { flex: 0 0 auto; margin: 0; }
+				.workspace, .nav-label, .sidebar-foot { display: none; }
+				.nav-list { display: flex; min-width: 0; gap: 3px; overflow-x: auto; }
+				.nav-list a { flex: 0 0 auto; gap: 6px; padding: 9px; font-size: 10px; }
+				.nav-mark { display: none; }
+				.main { margin-left: 0; }
+				.topbar { min-height: 52px; padding-inline: 16px; }
+				.content { padding: 24px 16px 18px; }
+				.columns { grid-template-columns: 1fr; }
+			}
+			@media (max-width: 480px) {
+				.sidebar { gap: 10px; padding-inline: 11px; }
+				.brand { gap: 6px; font-size: 19px; }
+				.brand-mark { width: 27px; height: 27px; font-size: 18px; }
+				.nav-list a { padding: 8px 7px; font-size: 9px; }
+				.top-date { font-size: 9px; }
+				.content { padding-inline: 12px; }
+				.welcome { align-items: flex-start; }
+				h1 { font-size: 21px; }
+				.button { padding-inline: 9px; font-size: 10px; white-space: nowrap; }
+				.metrics { gap: 8px; }
+				.metric { padding: 12px 11px; }
+				.metric-label { font-size: 9px; }
+				.metric-value { font-size: 17px; }
+				.metric-foot { font-size: 8px; }
+				.panel { padding: 15px 13px; }
+				.chart { gap: 4px; }
+				.bar { width: min(100%, 16px); }
+				table { min-width: 540px; }
+				.activity { padding-inline: 0; }
+				.activity-head { padding-inline: 13px; }
+				.footer { font-size: 8px; }
+			}
+			@media (prefers-reduced-motion: reduce) {
+				html { scroll-behavior: auto; }
+			}
+		</style>
 	</head>
 	<body>
-		<div id="root"></div>
-		<script type="module" src="/src/main.jsx"></script>
+		<div class="layout" id="inicio">
+			<aside class="sidebar" aria-label="Navegação do painel">
+				<a class="brand" href="#inicio" aria-label="Forma, início"><span class="brand-mark">f<span>.</span></span><span>forma<span class="brand-period">.</span></span></a>
+				<div class="workspace"><span class="workspace-mark">A</span><span class="workspace-name"><strong>Atelier Norte</strong><span>Plano essencial</span></span></div>
+				<span class="nav-label">MENU PRINCIPAL</span>
+				<nav class="nav-list" aria-label="Menu principal">
+					<a href="#inicio" aria-current="page"><span class="nav-mark">⌂</span>Visão geral</a>
+					<a href="#atividade"><span class="nav-mark">◎</span>Clientes</a>
+					<a href="#produtos"><span class="nav-mark">◇</span>Produtos <span class="stock-count coral">3</span></a>
+					<a href="#atividade"><span class="nav-mark">▤</span>Vendas</a>
+					<a href="#atividade"><span class="nav-mark">▧</span>Documentos</a>
+				</nav>
+				<div class="sidebar-foot"><div class="profile"><span class="avatar">JS</span><div><strong>Joana Silva</strong><span>Administradora</span></div></div></div>
+			</aside>
+
+			<main class="main">
+				<header class="topbar"><div class="crumb">Atelier Norte <span aria-hidden="true">/</span> <strong>Visão geral</strong></div><time class="top-date" datetime="2026-10-15">15 out, 2026</time></header>
+				<div class="content">
+					<section class="welcome" aria-labelledby="welcome-title">
+						<div><p class="eyebrow">QUINTA-FEIRA, 15 DE OUTUBRO</p><h1 id="welcome-title">Bom dia, Joana <span aria-hidden="true">☀</span></h1><p class="welcome-copy">Aqui está o resumo do seu negócio.</p></div>
+						<a class="button" href="#atividade">Nova venda</a>
+					</section>
+
+					<section class="metrics" aria-label="Indicadores principais">
+						<article class="metric"><div class="metric-label">Receita total <span class="metric-mark coral">€</span></div><div class="metric-value">12 480,00 €</div><div class="metric-foot"><span class="up">↑ 12,8%</span> vs. mês anterior</div></article>
+						<article class="metric"><div class="metric-label">Vendas realizadas <span class="metric-mark blue">↗</span></div><div class="metric-value">48</div><div class="metric-foot"><span class="up">↑ 8,2%</span> vs. mês anterior</div></article>
+						<article class="metric"><div class="metric-label">Clientes ativos <span class="metric-mark green">◎</span></div><div class="metric-value">126</div><div class="metric-foot"><span class="up">↑ 4,6%</span> vs. mês anterior</div></article>
+						<article class="metric"><div class="metric-label">Despesas <span class="metric-mark gold">−</span></div><div class="metric-value">3 240,00 €</div><div class="metric-foot"><span class="down">↑ 2,1%</span> vs. mês anterior</div></article>
+					</section>
+
+					<section class="columns" aria-label="Resumo do negócio">
+						<article class="panel" aria-labelledby="revenue-title">
+							<div class="panel-head"><div><h2 id="revenue-title">Receita ao longo do tempo</h2><p>Acompanhe o desempenho do seu negócio</p></div><span class="period">Últimos 12 meses</span></div>
+							<div class="chart-total"><strong>12 480,00 €</strong><span class="up">↑ 12,8%</span></div>
+							<div class="chart" role="img" aria-label="Gráfico de receita mensal de novembro a outubro">
+								<div class="bar-wrap"><div class="bar" style="height:32%"></div><span>Nov</span></div><div class="bar-wrap"><div class="bar" style="height:45%"></div><span>Dez</span></div><div class="bar-wrap"><div class="bar" style="height:39%"></div><span>Jan</span></div><div class="bar-wrap"><div class="bar" style="height:62%"></div><span>Fev</span></div><div class="bar-wrap"><div class="bar" style="height:51%"></div><span>Mar</span></div><div class="bar-wrap"><div class="bar" style="height:72%"></div><span>Abr</span></div><div class="bar-wrap"><div class="bar" style="height:58%"></div><span>Mai</span></div><div class="bar-wrap"><div class="bar" style="height:83%"></div><span>Jun</span></div><div class="bar-wrap"><div class="bar" style="height:68%"></div><span>Jul</span></div><div class="bar-wrap"><div class="bar" style="height:91%"></div><span>Ago</span></div><div class="bar-wrap"><div class="bar" style="height:73%"></div><span>Set</span></div><div class="bar-wrap"><div class="bar" style="height:100%"></div><span>Out</span></div>
+							</div>
+						</article>
+
+						<article class="panel" id="produtos" aria-labelledby="stock-title">
+							<div class="panel-head"><div><h2 id="stock-title">Stock a repor</h2><p>Produtos abaixo do mínimo</p></div><a class="section-link" href="#produtos">Ver tudo</a></div>
+							<div class="stock-list">
+								<div class="stock-row"><span class="swatch coral">✳</span><span class="stock-copy"><strong>Vela Botânica</strong><span>SKU VB-024</span></span><span class="stock-count coral">2 un.</span></div>
+								<div class="stock-row"><span class="swatch blue">◈</span><span class="stock-copy"><strong>Sabonete Cítrico</strong><span>SKU SC-011</span></span><span class="stock-count gold">4 un.</span></div>
+								<div class="stock-row"><span class="swatch green">✿</span><span class="stock-copy"><strong>Óleo de Lavanda</strong><span>SKU OL-008</span></span><span class="stock-count gold">5 un.</span></div>
+							</div>
+							<a class="inventory-link" href="#produtos">Gerir inventário</a>
+						</article>
+					</section>
+
+					<section class="panel activity" id="atividade" aria-labelledby="activity-title">
+						<div class="panel-head activity-head"><div><h2 id="activity-title">Atividade recente</h2><p>Últimas movimentações da sua empresa</p></div><a class="section-link" href="#atividade">Ver todas</a></div>
+						<div class="table-scroll"><table><thead><tr><th scope="col">CLIENTE</th><th scope="col">DOCUMENTO</th><th scope="col">DATA</th><th scope="col" class="amount">VALOR</th></tr></thead><tbody>
+							<tr><td><div class="client"><span class="avatar avatar-coral">MC</span><strong>Marta Costa</strong></div></td><td class="muted">Fatura #FT-2024-084</td><td class="muted">Hoje, 10:42</td><td class="amount"><span class="up">+ 248,00 €</span></td></tr>
+							<tr><td><div class="client"><span class="avatar avatar-blue">RA</span><strong>Rui Almeida</strong></div></td><td class="muted">Orçamento #OR-2024-031</td><td class="muted">Hoje, 09:18</td><td class="amount">612,50 €</td></tr>
+							<tr><td><div class="client"><span class="avatar avatar-green">LS</span><strong>Loja Sol Nascente</strong></div></td><td class="muted">Fatura #FT-2024-083</td><td class="muted">Ontem, 16:30</td><td class="amount"><span class="up">+ 89,90 €</span></td></tr>
+						</tbody></table></div>
+					</section>
+					<footer class="footer"><span>© 2026 Forma Gestão</span><span class="status">● Todos os sistemas operacionais</span></footer>
+				</div>
+			</main>
+		</div>
 	</body>
 </html>
 
