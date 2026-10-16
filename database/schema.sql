@@ -62,4 +62,4 @@ CREATE INDEX sale_items_sale_id_idx ON sale_items (sale_id);
 CREATE INDEX products_stock_alert_idx ON products (stock_quantity, min_stock);
 
 -- Importe este ficheiro e crie o primeiro administrador através de um processo controlado.
--- O endpoint público de registo atribui sempre o perfil employee.
+-- As contas seguintes são criadas por um administrador como manager ou employee.

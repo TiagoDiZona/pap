@@ -26,7 +26,7 @@ pap/
 
 ## Frontend e GitHub Pages
 
-Na raiz, execute `npm install` e `npm run dev`. Para publicar, em **Settings → Pages → Build and deployment**, selecione **GitHub Actions** como origem. O workflow `.github/workflows/deploy.yml` compila e publica `dist/` automaticamente quando há alterações na branch padrão; `base` em `vite.config.js` deve corresponder ao nome do repositório (atualmente `/pap/`). O frontend é estático; segredos e operações de autenticação permanecem na API.
+Na raiz, execute `npm install` e `npm run dev`. Para desenvolvimento, a aplicação usa `http://localhost:4000` por omissão; para publicar, defina `VITE_API_URL` com o endereço público da API no ambiente de compilação. Em **Settings → Pages → Build and deployment**, selecione **GitHub Actions** como origem. O workflow `.github/workflows/deploy.yml` compila e publica `dist/` automaticamente quando há alterações na branch padrão; `base` em `vite.config.js` deve corresponder ao nome do repositório (atualmente `/pap/`). O frontend é estático; segredos e operações de autenticação permanecem na API.
 
 ## API e PostgreSQL
 
@@ -34,6 +34,6 @@ Na raiz, execute `npm install` e `npm run dev`. Para publicar, em **Settings →
 2. Copie `backend/.env.example` para `backend/.env`, defina `DATABASE_URL`, um `JWT_SECRET` aleatório com pelo menos 32 bytes e os domínios em `CLIENT_ORIGINS`.
 3. Em `backend/`, execute `npm install` e `npm run dev`.
 
-Rotas iniciais: `GET /api/health`, `POST /api/auth/register` e `POST /api/auth/login`. O middleware `authenticateToken` valida JWT e `authorizeRoles('admin', ...)` protege rotas privadas por perfil. O registo cria utilizadores com perfil `employee`; não aceita a atribuição pública de `admin`. Configure o domínio exato do GitHub Pages em `CLIENT_ORIGINS`. Em alojamento gerido, ative TLS para PostgreSQL conforme as opções do fornecedor.
+Rotas iniciais: `GET /api/health`, `POST /api/auth/login` e `POST /api/auth/users`. A última exige token de um administrador e permite criar apenas gestores (`manager`) ou funcionários (`employee`); não existe registo público. Crie o primeiro administrador por um processo controlado diretamente na base de dados antes de disponibilizar a aplicação. Configure o domínio exato do GitHub Pages em `CLIENT_ORIGINS`. Em alojamento gerido, ative TLS para PostgreSQL conforme as opções do fornecedor.
 
 O token JWT deve ser enviado pela aplicação em `Authorization: Bearer <token>`. Antes de produção, acrescente limitação de tentativas de login, recuperação de conta, política de retenção/apagamento RGPD e um processo seguro de criação do primeiro administrador. Não guarde dados pessoais nos logs.

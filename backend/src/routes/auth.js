@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { pool } from '../db.js';
 import { asyncHandler } from '../middleware/async-handler.js';
+import { authenticateToken, authorizeRoles } from '../middleware/auth.js';
 
 const router = Router();
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -19,8 +20,8 @@ function publicUser(user) {
   return { id: user.id, name: user.name, email: user.email, role: user.role };
 }
 
-router.post('/register', asyncHandler(async (request, response) => {
-  const { name, email, password } = request.body ?? {};
+router.post('/users', authenticateToken, authorizeRoles('admin'), asyncHandler(async (request, response) => {
+  const { name, email, password, role } = request.body ?? {};
   const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
 
   if (typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 120) {
@@ -32,17 +33,20 @@ router.post('/register', asyncHandler(async (request, response) => {
   if (typeof password !== 'string' || password.length < 10 || password.length > 72) {
     return response.status(400).json({ error: 'A palavra-passe deve ter entre 10 e 72 caracteres.' });
   }
+  if (!['manager', 'employee'].includes(role)) {
+    return response.status(400).json({ error: 'O perfil deve ser gestor ou funcionário.' });
+  }
 
   const passwordHash = await bcrypt.hash(password, 12);
   try {
     const result = await pool.query(
       `INSERT INTO users (name, email, password_hash, role)
-       VALUES ($1, $2, $3, 'employee')
+       VALUES ($1, $2, $3, $4)
        RETURNING id, name, email, role`,
-      [name.trim(), normalizedEmail, passwordHash],
+      [name.trim(), normalizedEmail, passwordHash, role],
     );
     const user = result.rows[0];
-    return response.status(201).json({ user: publicUser(user), token: createToken(user) });
+    return response.status(201).json({ user: publicUser(user) });
   } catch (error) {
     if (error.code === '23505') {
       return response.status(409).json({ error: 'Já existe uma conta com esse email.' });

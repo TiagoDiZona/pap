@@ -9,6 +9,7 @@ import {
   CircleHelp,
   FileText,
   LayoutDashboard,
+  LogOut,
   Menu,
   MoreHorizontal,
   Plus,
@@ -16,6 +17,7 @@ import {
   Settings2,
   ShoppingBag,
   Users,
+  UserPlus,
   Wallet,
   X,
 } from 'lucide-react';
@@ -35,6 +37,65 @@ const transactions = [
 ];
 
 const bars = [32, 45, 39, 62, 51, 72, 58, 83, 68, 91, 73, 100];
+const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+
+function readSession() {
+  try {
+    return JSON.parse(localStorage.getItem('forma-session'));
+  } catch {
+    return null;
+  }
+}
+
+function Login({ onLogin }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function submit(event) {
+    event.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      const response = await fetch(`${apiUrl}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Não foi possível iniciar sessão.');
+      onLogin(data);
+    } catch (requestError) {
+      setError(requestError.message === 'Failed to fetch'
+        ? 'Não foi possível ligar ao servidor. Tente novamente mais tarde.'
+        : requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <main className="login-screen">
+      <section className="login-panel">
+        <a className="brand login-brand" href="#inicio" aria-label="Forma, início">
+          <span className="brand-mark">f<span>.</span></span><span>forma<span className="brand-period">.</span></span>
+        </a>
+        <p className="eyebrow">ÁREA DE ACESSO</p>
+        <h1>Bem-vindo de volta</h1>
+        <p className="login-copy">Inicie sessão com as credenciais fornecidas pelo administrador.</p>
+        <form className="login-form" onSubmit={submit}>
+          <label>Email<input type="email" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
+          <label>Palavra-passe<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label>
+          {error && <p className="form-error" role="alert">{error}</p>}
+          <button className="primary-button login-submit" type="submit" disabled={loading}>{loading ? 'A validar...' : 'Iniciar sessão'}</button>
+        </form>
+        <p className="login-footnote">O acesso é criado previamente pelo administrador.</p>
+      </section>
+      <aside className="login-aside"><span>FORMA / GESTÃO</span><p>O seu negócio,<br />com outra clareza.</p><div className="aside-rule" /><small>Uma visão simples do que faz a empresa avançar.</small></aside>
+    </main>
+  );
+}
 
 function Metric({ label, value, change, positive, icon: Icon, tint }) {
   return (
@@ -55,9 +116,59 @@ function Metric({ label, value, change, positive, icon: Icon, tint }) {
 }
 
 export default function Dashboard() {
+  const [session, setSession] = useState(readSession);
   const [active, setActive] = useState('Visão geral');
   const [menuOpen, setMenuOpen] = useState(false);
   const [period, setPeriod] = useState('Últimos 12 meses');
+  const [teamName, setTeamName] = useState('');
+  const [teamEmail, setTeamEmail] = useState('');
+  const [teamPassword, setTeamPassword] = useState('');
+  const [teamRole, setTeamRole] = useState('employee');
+  const [teamMessage, setTeamMessage] = useState('');
+  const [teamError, setTeamError] = useState('');
+  const [creatingUser, setCreatingUser] = useState(false);
+
+  function handleLogin(data) {
+    const nextSession = { user: data.user, token: data.token };
+    localStorage.setItem('forma-session', JSON.stringify(nextSession));
+    setSession(nextSession);
+  }
+
+  function handleLogout() {
+    localStorage.removeItem('forma-session');
+    setSession(null);
+  }
+
+  async function createTeamMember(event) {
+    event.preventDefault();
+    setTeamMessage('');
+    setTeamError('');
+    setCreatingUser(true);
+    try {
+      const response = await fetch(`${apiUrl}/api/auth/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.token}` },
+        body: JSON.stringify({ name: teamName, email: teamEmail, password: teamPassword, role: teamRole }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Não foi possível criar o utilizador.');
+      setTeamMessage(`A conta de ${data.user.name} foi criada.`);
+      setTeamName('');
+      setTeamEmail('');
+      setTeamPassword('');
+    } catch (requestError) {
+      setTeamError(requestError.message === 'Failed to fetch'
+        ? 'Não foi possível ligar ao servidor.'
+        : requestError.message);
+    } finally {
+      setCreatingUser(false);
+    }
+  }
+
+  if (!session?.token || !session?.user) return <Login onLogin={handleLogin} />;
+
+  const user = session.user;
+  const teamNavigation = user.role === 'admin' ? [...navigation, { label: 'Equipa', icon: UserPlus }] : navigation;
 
   return (
     <div className="app-shell">
@@ -67,13 +178,13 @@ export default function Dashboard() {
           <span>forma<span className="brand-period">.</span></span>
         </a>
         <div className="workspace-switch">
-          <div className="workspace-avatar">A</div>
+          <div className="workspace-avatar">{user.name.slice(0, 1).toUpperCase()}</div>
           <div className="workspace-copy"><strong>Atelier Norte</strong><span>Plano essencial</span></div>
           <ChevronDown size={15} />
         </div>
         <div className="nav-caption">MENU PRINCIPAL</div>
         <nav className="main-nav" aria-label="Navegação principal">
-          {navigation.map(({ label, icon: Icon, badge }) => (
+          {teamNavigation.map(({ label, icon: Icon, badge }) => (
             <button key={label} className={`nav-item ${active === label ? 'nav-active' : ''}`} onClick={() => { setActive(label); setMenuOpen(false); }}>
               <Icon size={18} strokeWidth={1.8} /><span>{label}</span>{badge && <span className="nav-badge">{badge}</span>}
             </button>
@@ -83,9 +194,9 @@ export default function Dashboard() {
           <button className="nav-item"><Settings2 size={18} strokeWidth={1.8} /><span>Definições</span></button>
           <button className="nav-item"><CircleHelp size={18} strokeWidth={1.8} /><span>Ajuda e suporte</span></button>
           <div className="profile-row">
-            <div className="profile-avatar">JS</div>
-            <div className="workspace-copy"><strong>Joana Silva</strong><span>Administradora</span></div>
-            <MoreHorizontal size={19} />
+            <div className="profile-avatar">{user.name.split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase()}</div>
+            <div className="workspace-copy"><strong>{user.name}</strong><span>{user.role === 'admin' ? 'Administradora' : user.role === 'manager' ? 'Gestor' : 'Funcionário'}</span></div>
+            <button className="row-more" aria-label="Terminar sessão" title="Terminar sessão" onClick={handleLogout}><LogOut size={17} /></button>
           </div>
         </div>
       </aside>
@@ -107,10 +218,30 @@ export default function Dashboard() {
         </header>
 
         <div className="dashboard-content">
+          {active === 'Equipa' && user.role === 'admin' ? (
+            <section className="team-page">
+              <div className="welcome-row">
+                <div><p className="eyebrow">GESTÃO DE ACESSOS</p><h1>Equipa</h1><p className="welcome-subtitle">Crie contas para gestores e funcionários.</p></div>
+              </div>
+              <form className="surface team-form" onSubmit={createTeamMember}>
+                <div className="panel-heading"><div><h2>Novo utilizador</h2><p>As credenciais são definidas pelo administrador.</p></div></div>
+                <div className="team-fields">
+                  <label>Nome completo<input value={teamName} onChange={(event) => setTeamName(event.target.value)} minLength="2" maxLength="120" required /></label>
+                  <label>Email<input type="email" value={teamEmail} onChange={(event) => setTeamEmail(event.target.value)} required /></label>
+                  <label>Palavra-passe inicial<input type="password" value={teamPassword} onChange={(event) => setTeamPassword(event.target.value)} minLength="10" maxLength="72" required /></label>
+                  <label>Perfil<select value={teamRole} onChange={(event) => setTeamRole(event.target.value)}><option value="manager">Gestor</option><option value="employee">Funcionário</option></select></label>
+                </div>
+                {teamError && <p className="form-error" role="alert">{teamError}</p>}
+                {teamMessage && <p className="form-success" role="status">{teamMessage}</p>}
+                <button className="primary-button" type="submit" disabled={creatingUser}><UserPlus size={16} />{creatingUser ? 'A criar...' : 'Criar conta'}</button>
+              </form>
+            </section>
+          ) : (
+          <>
           <section className="welcome-row">
             <div>
               <p className="eyebrow">QUINTA-FEIRA, 15 DE OUTUBRO</p>
-              <h1>Bom dia, Joana <span>☀</span></h1>
+              <h1>Bom dia, {user.name.split(/\s+/)[0]} <span>☀</span></h1>
               <p className="welcome-subtitle">Aqui está o resumo do seu negócio.</p>
             </div>
             <button className="primary-button"><Plus size={17} /> Nova venda</button>
@@ -155,6 +286,8 @@ export default function Dashboard() {
           </section>
 
           <footer className="dashboard-footer"><span>© 2026 Forma Gestão</span><span><span className="status-dot" /> Todos os sistemas operacionais</span></footer>
+          </>
+          )}
         </div>
       </main>
     </div>
